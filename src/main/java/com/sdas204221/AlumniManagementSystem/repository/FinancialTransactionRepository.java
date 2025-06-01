@@ -1,0 +1,8 @@
+package com.sdas204221.AlumniManagementSystem.repository;
+
+import com.sdas204221.AlumniManagementSystem.model.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+//@Repository
+public interface FinancialTransactionRepository extends JpaRepository<FinancialTransaction, Long> {}
