@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -26,12 +27,14 @@ public class ListingController {
     @Autowired
     private RoleService roleService;
     @PostMapping
-    public ResponseEntity<Long> add(@RequestBody Listing listing, @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<Long> add(@RequestBody Listing listing, @AuthenticationPrincipal UserDetails userDetails) {
         listing.setUsername(userDetails.getUsername());
         listing.setCreationDate(LocalDateTime.now());
         listing.setApproved(false);
-        listing=listingService.save(listing);
-        return new ResponseEntity<>(listing.getId(),HttpStatus.CREATED);
+
+        // Save listing
+        Listing savedListing = listingService.save(listing);
+        return new ResponseEntity<>(savedListing.getId(), HttpStatus.CREATED);
     }
 
     @PatchMapping("/approve/{postId}")

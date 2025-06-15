@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("api/user")
 public class UserController {
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtService jwtService;
     @Autowired
@@ -44,6 +47,8 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody User user) {
+        System.out.println(user.getUsername());
+        System.out.println(passwordEncoder.encode(user.getPassword()));
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
@@ -180,4 +185,39 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
     }
+    @GetMapping("/myProfile")
+    public ResponseEntity<Profile> GetMyProfile(@AuthenticationPrincipal UserDetails userDetails){
+        Profile profile=userService.getProfile(userDetails.getUsername());
+        return new ResponseEntity<>(profile,HttpStatus.OK);
+    }
+    @PutMapping("/myProfile")
+    public ResponseEntity<Profile> SetMyProfile(@RequestBody Profile profile,@AuthenticationPrincipal UserDetails userDetails){
+       String username=
+               userDetails
+                       .getAuthorities().contains(new SimpleGrantedAuthority(
+                               roleService
+                                       .getRole("admin")
+                                       .getName()
+                       )) ||
+                       userDetails
+                               .getAuthorities().contains(new SimpleGrantedAuthority(
+                                       roleService
+                                               .getRole("moderator")
+                                               .getName()
+                               ))
+        ?profile.getUser().getUsername():userDetails.getUsername();
+        profile.getUser().setUsername(username);
+       User user=userService.findUser(username);
+        profile.getUser().setRoles(user.getRoles());
+        userService.saveProfile(profile);
+        User user1=userService.findUser(username);
+        user1.setEnabled(true);
+        userService.updateUser(user1);
+        return new ResponseEntity<>(userService.getProfile(username),HttpStatus.OK);
+    }
+    @GetMapping("/users")
+    public ResponseEntity<List<String>> getAllUsername(){
+        return new ResponseEntity<>(userService.getAllUsername(),HttpStatus.OK);
+    }
+
 }

@@ -25,6 +25,9 @@ public class UserService {
     private RoleRepository roleRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    public List<String> getAllUsername(){
+        return userRepository.findAll().stream().map(User::getUsername).toList();
+    }
     public User findUser(String username){
         return userRepository.findByUsername(username);
     }
